@@ -80,6 +80,11 @@ verify_*.py
 !.claude/skills/
 !.claude/skills/**
 
+#ignore codebuddy workspace artifacts, but keep shared repo skills versioned
+.codebuddy/*
+!.codebuddy/skills/
+!.codebuddy/skills/**
+
 # ignore static files
 static/
 /apps/dsa-desktop/dist/
