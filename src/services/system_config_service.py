@@ -149,6 +149,7 @@ class SystemConfigService:
         "CUSTOM_WEBHOOK_URLS": ("custom_webhook_urls", "csv"),
         "CUSTOM_WEBHOOK_BEARER_TOKEN": ("custom_webhook_bearer_token", "string"),
         "CUSTOM_WEBHOOK_BODY_TEMPLATE": ("custom_webhook_body_template", "string"),
+        "DINGTALK_WEBHOOK_SECRET": ("dingtalk_webhook_secret", "string"),
         "WEBHOOK_VERIFY_SSL": ("webhook_verify_ssl", "bool"),
         "DISCORD_WEBHOOK_URL": ("discord_webhook_url", "string"),
         "DISCORD_BOT_TOKEN": ("discord_bot_token", "string"),

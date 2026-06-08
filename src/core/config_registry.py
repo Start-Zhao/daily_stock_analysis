@@ -1218,6 +1218,24 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "validation": {},
         "display_order": 52,
     },
+    "DINGTALK_WEBHOOK_SECRET": {
+        "title": "DingTalk Webhook Signing Secret",
+        "description": (
+            "Signing secret for DingTalk custom robot when 'Sign' security is enabled. "
+            "Must match the secret shown in the robot's security settings. "
+            "Leave empty if the robot uses keyword or IP whitelist security instead."
+        ),
+        "category": "notification",
+        "data_type": "string",
+        "ui_control": "password",
+        "is_sensitive": True,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": None,
+        "options": [],
+        "validation": {},
+        "display_order": 53,
+    },
     "WEBHOOK_VERIFY_SSL": {
         "title": "Webhook SSL Verify",
         "description": "Verify HTTPS certificates for webhook requests. Set to false ONLY for self-signed certs in trusted internal networks. WARNING: Disabling allows MITM attacks—do NOT use on public networks.",
@@ -3803,6 +3821,14 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
         ],
         "docs": _DOC_CUSTOM_WEBHOOK,
         "warning_codes": ["json_template_must_render_object"],
+    },
+    "DINGTALK_WEBHOOK_SECRET": {
+        "help_key": "settings.notification.CUSTOM_WEBHOOK_URLS",
+        "examples": [
+            "DINGTALK_WEBHOOK_SECRET=SECxxxxxxxx",
+        ],
+        "docs": _DOC_CUSTOM_WEBHOOK,
+        "warning_codes": ["secret_value"],
     },
     "FEISHU_WEBHOOK_SECRET": {
         "help_key": "settings.notification.FEISHU_WEBHOOK_URL",

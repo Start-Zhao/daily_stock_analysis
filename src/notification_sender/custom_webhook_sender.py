@@ -8,8 +8,12 @@
 import logging
 import json
 import time
+import base64
+import hashlib
+import hmac
 from string import Template
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote_plus
 
 import requests
 
@@ -33,6 +37,7 @@ class CustomWebhookSender:
         self._custom_webhook_bearer_token = getattr(config, 'custom_webhook_bearer_token', None)
         self._custom_webhook_body_template = getattr(config, 'custom_webhook_body_template', None)
         self._webhook_verify_ssl = getattr(config, 'webhook_verify_ssl', True)
+        self._dingtalk_webhook_secret = (getattr(config, 'dingtalk_webhook_secret', None) or '').strip()
  
     def send_to_custom(self, content: str) -> bool:
         """
@@ -69,17 +74,18 @@ class CustomWebhookSender:
                 
                 # 钉钉机器人对 body 有字节上限（约 20000 bytes），超长需要分批发送
                 if self._is_dingtalk_webhook(url):
+                    signed_url = self._sign_dingtalk_url(url)
                     templated_payload = self._build_custom_webhook_template_payload(content)
                     if templated_payload is not None:
-                        if self._post_custom_webhook(url, templated_payload, timeout=30):
+                        if self._post_custom_webhook(signed_url, templated_payload, timeout=30):
                             logger.info(f"自定义 Webhook {i+1}（钉钉模板）推送成功")
                             success_count += 1
-                        elif self._send_dingtalk_chunked(url, content, max_bytes=20000):
+                        elif self._send_dingtalk_chunked(signed_url, content, max_bytes=20000):
                             logger.info(f"自定义 Webhook {i+1}（钉钉模板失败，回退分批）推送成功")
                             success_count += 1
                         else:
                             logger.error(f"自定义 Webhook {i+1}（钉钉模板）推送失败")
-                    elif self._send_dingtalk_chunked(url, content, max_bytes=20000):
+                    elif self._send_dingtalk_chunked(signed_url, content, max_bytes=20000):
                         logger.info(f"自定义 Webhook {i+1}（钉钉）推送成功")
                         success_count += 1
                     else:
@@ -132,8 +138,9 @@ class CustomWebhookSender:
                         )
                 else:
                     if fallback_content:
+                        signed_url = self._sign_dingtalk_url(url)
                         payload = self._build_custom_webhook_payload(url, fallback_content)
-                        if self._post_custom_webhook(url, payload, timeout=30):
+                        if self._post_custom_webhook(signed_url, payload, timeout=30):
                             logger.info(
                                 "自定义 Webhook %d（图片不支持，回退文本）推送成功", i + 1
                             )
@@ -168,9 +175,10 @@ class CustomWebhookSender:
         for index, url in enumerate(self._custom_webhook_urls):
             try:
                 payload = self._build_custom_webhook_payload(url, content)
+                signed_url = self._sign_dingtalk_url(url)
                 attempts.append(
                     self._post_custom_webhook_attempt(
-                        url=url,
+                        url=signed_url,
                         payload=payload,
                         timeout_seconds=timeout_seconds,
                         index=index,
@@ -391,6 +399,28 @@ class CustomWebhookSender:
     def _is_dingtalk_webhook(url: str) -> bool:
         url_lower = (url or "").lower()
         return 'dingtalk' in url_lower or 'oapi.dingtalk.com' in url_lower
+
+    def _sign_dingtalk_url(self, url: str) -> str:
+        """Append DingTalk webhook signing parameters when secret is configured.
+
+        DingTalk signing algorithm:
+        1. timestamp = current milliseconds
+        2. string_to_sign = f"{timestamp}\\n{secret}"
+        3. sign = url_encode(base64(hmac_sha256(secret, string_to_sign)))
+        4. Append &timestamp=...&sign=... to the URL
+        """
+        if not self._dingtalk_webhook_secret or not self._is_dingtalk_webhook(url):
+            return url
+        timestamp = str(int(time.time() * 1000))
+        string_to_sign = f"{timestamp}\n{self._dingtalk_webhook_secret}"
+        hmac_code = hmac.new(
+            self._dingtalk_webhook_secret.encode('utf-8'),
+            string_to_sign.encode('utf-8'),
+            digestmod=hashlib.sha256,
+        ).digest()
+        sign = quote_plus(base64.b64encode(hmac_code))
+        separator = '&' if '?' in url else '?'
+        return f"{url}{separator}timestamp={timestamp}&sign={sign}"
 
     @staticmethod
     def _is_discord_webhook(url: str) -> bool:

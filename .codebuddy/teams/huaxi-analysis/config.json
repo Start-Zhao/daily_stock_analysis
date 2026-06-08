@@ -1,0 +1,18 @@
+{
+  "name": "huaxi-analysis",
+  "leadAgentId": "3337f90321b0491daf3342355cc9cdbf",
+  "workspacePath": "d:/daily_stock_analysis",
+  "createdAt": "2026-05-28T07:28:20.409Z",
+  "options": {
+    "workspacePath": "d:/daily_stock_analysis",
+    "isAutoTeam": false
+  },
+  "members": [
+    {
+      "memberId": "team-lead@huaxi-analysis",
+      "name": "team-lead",
+      "role": "Team Lead - coordinates the team and interacts with the user"
+    }
+  ],
+  "isAutoTeam": false
+}
